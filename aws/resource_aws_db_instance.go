@@ -345,6 +345,11 @@ func resourceAwsDbInstance() *schema.Resource {
 				Computed: true,
 			},
 
+			"secondary_az": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"tags": tagsSchema(),
 		},
 	}
@@ -733,6 +738,8 @@ func resourceAwsDbInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("kms_key_id", v.KmsKeyId)
 	d.Set("port", v.DbInstancePort)
 	d.Set("iam_database_authentication_enabled", v.IAMDatabaseAuthenticationEnabled)
+	d.Set("secondary_az", v.SecondaryAvailabilityZone)
+
 	if v.DBSubnetGroup != nil {
 		d.Set("db_subnet_group_name", v.DBSubnetGroup.DBSubnetGroupName)
 	}

@@ -336,6 +336,25 @@ func TestAccAWSDBInstance_portUpdate(t *testing.T) {
 	})
 }
 
+func TestAccAWSDBInstance_MultiAZ(t *testing.T) {
+	var v rds.DBInstance
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckAWSDBInstanceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAWSDBInstanceMultiAZConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAWSDBInstanceExists("aws_db_instance.multibar", &v),
+					resource.TestCheckResourceAttrSet("aws_db_instance.multibar", "secondary_az"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccAWSDBInstance_MSSQL_TZ(t *testing.T) {
 	var v rds.DBInstance
 
@@ -674,7 +693,6 @@ resource "aws_db_instance" "bar" {
 	name = "baz"
 	password = "barbarbarbar"
 	username = "foo"
-
 
 	# Maintenance Window is stored in lower case in the API, though not strictly
 	# documented. Terraform will downcase this to match (as opposed to throw a
@@ -1334,3 +1352,29 @@ data "template_file" "test" {
 }
 `, rInt)
 }
+
+const testAccAWSDBInstanceMultiAZConfig = `
+resource "aws_db_instance" "multibar" {
+	allocated_storage = 10
+	engine = "MySQL"
+	engine_version = "5.6.35"
+	instance_class = "db.t1.micro"
+	name = "multibaz"
+	password = "barbarbarbar"
+	username = "foo"
+	multi_az = true
+
+	# Maintenance Window is stored in lower case in the API, though not strictly
+	# documented. Terraform will downcase this to match (as opposed to throw a
+	# validation error).
+	maintenance_window = "Fri:09:00-Fri:09:30"
+	skip_final_snapshot = true
+
+	backup_retention_period = 0
+
+	parameter_group_name = "default.mysql5.6"
+
+	timeouts {
+		create = "30m"
+	}
+}`
