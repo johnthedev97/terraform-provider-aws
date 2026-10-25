@@ -417,7 +417,6 @@ func resourceJobDefinition() *schema.Resource {
 																"medium": {
 																	Type:         schema.TypeString,
 																	Optional:     true,
-																	Default:      "",
 																	ValidateFunc: validation.StringInSlice([]string{"", "Memory"}, true),
 																},
 																"size_limit": {
@@ -1442,8 +1441,14 @@ func expandVolumes(tfList []any) []awstypes.EksVolume {
 		if v, ok := tfMap["empty_dir"].([]any); ok && len(v) > 0 {
 			if v, ok := v[0].(map[string]any); ok {
 				apiObject.EmptyDir = &awstypes.EksEmptyDir{
-					Medium:    aws.String(v["medium"].(string)),
 					SizeLimit: aws.String(v["size_limit"].(string)),
+				}
+				if m, ok := v["medium"]; ok && m == "Memory" {
+					log.Printf("[INFO] Volume %+v", v)
+					log.Printf("[INFO] Medium is -%s-", m)
+					apiObject.EmptyDir.Medium = aws.String(m.(string))
+				} else {
+					log.Printf("[INFO] Skipping medium...")
 				}
 			}
 		}
@@ -1476,6 +1481,7 @@ func expandVolumes(tfList []any) []awstypes.EksVolume {
 			}
 		}
 
+		log.Printf("[INFO] Adding EKS volume with empty dir: %+v", apiObject.EmptyDir)
 		apiObjects = append(apiObjects, apiObject)
 	}
 
